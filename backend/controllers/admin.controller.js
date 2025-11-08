@@ -3,17 +3,16 @@ import Claim from "../models/claim.model.js";
 
 // Create a new item
 export const createItem = async (req, res) => {
-  const { itemId, name, category, foundLocation, dateFound } = req.body;
+  const { name, category, foundLocation, dateFound } = req.body;
 
-  if (!itemId || !name || !category || !foundLocation || !dateFound) {
+  if (!name || !category || !foundLocation || !dateFound) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
   try {
-    const existingItem = await Item.findOne({ itemId });
-    if (existingItem) {
-      return res.status(400).json({ message: "Item ID already exists" });
-    }
+    // Auto-generate Item ID
+    const itemCount = await Item.countDocuments();
+    const itemId = `ITEM${String(itemCount + 1).padStart(6, "0")}`;
 
     const newItem = new Item({
       itemId,
@@ -103,23 +102,55 @@ export const getItemClaims = async (req, res) => {
 };
 
 // List pending claims: claims with status "pending"
+// List claims with filters
 export const listPendingClaims = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const query = { status: "pending" };
+    // Build query based on filters
+    const query = {};
 
-    const [claims, total] = await Promise.all([
-      Claim.find(query)
+    // Status filter
+    if (req.query.status) {
+      query.status = req.query.status;
+    } else {
+      query.status = "pending"; // Default to pending
+    }
+
+    // Search filter (search in claimant name or item name)
+    let claims, total;
+
+    if (req.query.search) {
+      // If search is provided, we need to populate first then filter
+      const allClaims = await Claim.find(query)
         .populate("claimant", "name email rollNo")
         .populate("item")
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 }),
-      Claim.countDocuments(query),
-    ]);
+        .sort({ createdAt: -1 });
+
+      const searchLower = req.query.search.toLowerCase();
+      const filteredClaims = allClaims.filter(
+        (claim) =>
+          claim.claimant?.name?.toLowerCase().includes(searchLower) ||
+          claim.claimant?.email?.toLowerCase().includes(searchLower) ||
+          claim.item?.name?.toLowerCase().includes(searchLower) ||
+          claim.item?.itemId?.toLowerCase().includes(searchLower)
+      );
+
+      total = filteredClaims.length;
+      claims = filteredClaims.slice(skip, skip + limit);
+    } else {
+      [claims, total] = await Promise.all([
+        Claim.find(query)
+          .populate("claimant", "name email rollNo")
+          .populate("item")
+          .skip(skip)
+          .limit(limit)
+          .sort({ createdAt: -1 }),
+        Claim.countDocuments(query),
+      ]);
+    }
 
     const totalPages = Math.ceil(total / limit);
 
@@ -194,20 +225,46 @@ export const rejectClaim = async (req, res) => {
   }
 };
 
-// List all items for admin oversight with pagination
+// List all items for admin oversight with pagination and filters
 export const listAllItems = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    // Build query object based on filters
+    const query = {};
+
+    // Search filter (search in name and itemId)
+    if (req.query.search) {
+      query.$or = [
+        { name: { $regex: req.query.search, $options: "i" } },
+        { itemId: { $regex: req.query.search, $options: "i" } },
+      ];
+    }
+
+    // Category filter
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    // Location filter
+    if (req.query.location) {
+      query.foundLocation = req.query.location;
+    }
+
+    // Status filter (claimed/available)
+    if (req.query.isClaimed !== undefined) {
+      query.isClaimed = req.query.isClaimed === "true";
+    }
+
     const [items, total] = await Promise.all([
-      Item.find({})
+      Item.find(query)
         .populate("owner", "name email rollNo")
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }),
-      Item.countDocuments({}),
+      Item.countDocuments(query),
     ]);
 
     const totalPages = Math.ceil(total / limit);
