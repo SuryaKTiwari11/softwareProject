@@ -7,7 +7,7 @@ import ItemDetail from './pages/ItemDetail.jsx'
 import Login from './pages/login.jsx'
 import Signup from './pages/signup.jsx'
 import Profile from './pages/Profile.jsx'
-import Admin from './pages/Admin.jsx'
+import Admin from './pages/admin.jsx'
 import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 import { PublicRoute } from './components/PublicRoute.jsx'
 
