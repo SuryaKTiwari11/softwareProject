@@ -21,7 +21,15 @@ const port = process.env.PORT || 3000;
 
 app.use(helmet());
 app.use(morgan("dev"));
-app.use(cors());
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_URL || "https://your-vercel-app.vercel.app"
+        : "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
 app.use(express.json());
@@ -37,6 +45,4 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+app.listen(port);

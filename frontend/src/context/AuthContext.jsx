@@ -2,6 +2,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -18,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const response = await axios.get('http://localhost:3000/api/auth/profile', {
+        const response = await axios.get(`${API_URL}/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(response.data.user);
@@ -32,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post(`${API_URL}/auth/login`, {
         email,
         password
       });
@@ -40,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       
       // Get user profile
-      const profileResponse = await axios.get('http://localhost:3000/api/auth/profile', {
+      const profileResponse = await axios.get(`${API_URL}/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const userData = profileResponse.data.user;
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (name, email, password, rollNo) => {
     try {
-      await axios.post('http://localhost:3000/api/auth/signup', {
+      await axios.post(`${API_URL}/auth/signup`, {
         name,
         email,
         password,
@@ -78,7 +80,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await axios.post('http://localhost:3000/api/auth/logout', {}, {
+        await axios.post(`${API_URL}/auth/logout`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

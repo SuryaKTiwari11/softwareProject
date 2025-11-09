@@ -19,6 +19,12 @@ export const signUp = async (req, res) => {
   }
 
   try {
+    const existingRollNo = await User.findOne({ rollNo });
+    if (existingRollNo) {
+      return res
+        .status(400)
+        .json({ message: "Roll number already registered" });
+    }
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: "Email already registered" });
@@ -69,7 +75,7 @@ export const login = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "Lax",
       maxAge: 3600000, // 1 hour
     });
     res.status(200).json({ token, message: "Login successful" });
@@ -84,7 +90,7 @@ export const logout = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "Lax",
     });
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
