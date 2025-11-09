@@ -25,7 +25,7 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL || "https://your-vercel-app.vercel.app"
+        ? "https://lost-and-found-portal-six.vercel.app"
         : "http://localhost:5173",
     credentials: true,
   })
