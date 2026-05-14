@@ -34,13 +34,13 @@ const Navbar = () => {
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between min-h-24">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2">
               <img 
                 src="/lostnfound/Thapar_Logo-Photoroom.png" 
                 alt="Thapar Institute Logo" 
-                className="h-8 w-auto sm:h-10"
+                className="h-[clamp(56px,6vw,72px)] w-auto object-contain"
               />
               {/* Desktop View */}
               <div className="hidden lg:flex flex-col leading-tight">
